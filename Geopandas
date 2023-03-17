@@ -1,0 +1,35 @@
+import geopandas as gpd
+import pandas as pd 
+import numpy as np
+from shapely.geometry import Polygon, Point
+import matplotlib.pyplot as plt
+file=pd.read_csv('location_day1.csv')
+print(file)
+
+lat_point_list = [59.12393608068, 59.12387537796, 59.12383923344,59.12380051525, 59.12379447253,59.12383324678, 59.12389363203, 59.12389966061,59.12387624499,59.12387744798,59.12390077963,59.12391932743,59.12394173161,59.12395851428,59.12393819535,59.12393608068]
+lon_point_list = [ 14.60856301833,14.60863380838,14.60856239474,14.60860698646,14.6085952518,14.60855019891,14.60848057366,14.60849299258,14.60852023391,14.60852165877,14.60849466896,14.60853058398,14.6085047381,14.60853796254,14.60856135392,14.60856301833]
+
+polygon_geom = Polygon(zip(lon_point_list, lat_point_list))
+crs = {'init': 'epsg:4326'}
+polygon = gpd.GeoDataFrame(index=[0], crs=crs, geometry=[polygon_geom])   
+fig, ax = plt.subplots() 
+polygon.plot(ax=ax, facecolor='gray');  
+df = pd.DataFrame({'lon':file['longitude'], 'lat':file['latitude']})
+df['coords'] = list(zip(df['lon'],df['lat']))
+df['coords'] = df['coords'].apply(Point)
+points = gpd.GeoDataFrame(df, geometry='coords')
+points.plot(ax=ax, color='blue', markersize=5)
+pip_mask = points.within(polygon.loc[0, 'geometry'])
+print(pip_mask)
+pip_data = points.loc[pip_mask]
+print(pip_data)
+pip_data.to_csv('Interior.csv')
+'''k=0
+for i in range(624):
+  p = Point(file['longitude'][i],file['latitude'][i])
+  print(p)
+  if p.contains(polygon_geom) == 'true':
+    k=k+1
+print(k) '''   
+polygon.to_file(filename='polygon.geojson', driver='GeoJSON')
+polygon.to_file(filename='polygon.shp', driver="ESRI Shapefile")
